@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: couchpotato
+    labels:
+      app: couchpotato
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: couchpotato
+  template:
+    metadata:
+      name: couchpotato
+      labels:
+        app: couchpotato
+    spec:
+      containers:
+      - image: linuxserver/couchpotato
+        name: couchpotato
+        env:
+        - name: TZ
+          value: "America/New York"
+        - name: PUID
+          value: "65534"
+        - name: PGID
+          value: "65534"
+        ports:
+          - containerPort: 5050
+            protocol: TCP
+            hostPort: 5050
+        volumeMounts:
+          - mountPath: "/downloads"
+            name: media
+          - mountPath: "/config"
+            name: config
+          - mountPath: "/movies"
+            name: media2
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: nfs-mercury-media-downloads
+        - name: config
+          persistentVolumeClaim:
+            claimName: nfs-mercury-config-couchpotato
+        - name: media2
+          persistentVolumeClaim:
+            claimName: nfs-mercury-media-movies
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mercury-media-downloads
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadOnlyMany
+  mountOptions:
+    - hard
+    - vers=3
+  nfs:
+    server: 192.168.1.149
+    path: "/volume1/media/movies"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mercury-config-couchpotato
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadOnlyMany
+  mountOptions:
+    - hard
+    - vers=3
+  nfs:
+    server: 192.168.1.111
+    path: "/volume1/nas_share/docker/images/media/couchpotato/config"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mercury-media-movies
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadOnlyMany
+  mountOptions:
+    - hard
+    - vers=3
+  nfs:
+    server: 192.168.1.149
+    path: "/volume1/media/movies"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mercury-media-movies
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1000Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mercury-config-couchpotato
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1000Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mercury-media-downloads
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1000Gi
+---

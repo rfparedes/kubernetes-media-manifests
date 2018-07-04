@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: intranet
+    labels: 
+      app: intranet
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: intranet
+  template:
+    metadata:
+      name: intranet
+      labels:
+        app: intranet
+    spec:
+      containers:
+      - image: nginx
+        name: intranet
+        env:
+        - name: TZ
+          value: "America/New York"
+        - name: PUID
+          value: "1024"
+        - name: PGUID
+          value: "100"
+        ports:
+          - containerPort: 80
+            protocol: TCP
+            hostPort: 80
+        volumeMounts:
+          - mountPath: "/usr/share/nginx/html"
+            name: htdocs
+      volumes:
+        - name: htdocs
+          persistentVolumeClaim:
+            claimName: nfs-mercury-intranet-htdocs
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mercury-intranet-htdocs
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadOnlyMany
+  mountOptions:
+    - hard
+    - vers=3
+  nfs:
+    server: 192.168.1.111
+    path: "/volume1/nas_share/docker/volume/intranet/www"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mercury-intranet-htdocs
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1000Gi
+---
