@@ -16,7 +16,7 @@ spec:
         app: couchpotato
     spec:
       containers:
-      - image: linuxserver/couchpotato
+      - image: linuxserver/couchpotato:127
         name: couchpotato
         env:
         - name: TZ
@@ -132,3 +132,17 @@ spec:
     requests:
       storage: 1000Gi
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchpotato-service
+spec:
+  selector:
+    app: couchpotato
+  type: NodePort
+  ports:
+  - name: couchpotato
+    port: 5050
+    targetPort: 5050
+    nodePort: 32402
+    protocol: TCP
